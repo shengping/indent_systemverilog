@@ -16,8 +16,9 @@ if ( not defined $sv_need_indent){
 }
 
 $indent_cnt = 0;
-@inc_keywords = qw/begin case casex casez class clocking config function generate covergroup interface module package primitive program property specify table task fork randcase/;
-@dec_keywords = qw/end endcase endclass endclocking endconfig endfunction endgenerate endgroup endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any/;
+@inc_keywords=qw/begin case casex casez class    clocking    config    function    generate    covergroup interface    module    package    primitive    program    property    specify    table    task    fork randcase/;
+@dec_keywords=qw/end   endcase          endclass endclocking endconfig endfunction endgenerate endgroup   endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any/;
+@exclude_keywords = ('\/\*.*\*\/','".*"','\'.*\'','\/\/.*','\(.*\)','extern\s+.*?task','extern\s+.*?function','\bpure\s+virtual\s+\w+','disable\s+fork','virtual\s+interface','typedef\s+class','wait\s+fork\b');
 
 if ( not defined $space_num) {
   $space_num = 2;
@@ -33,23 +34,32 @@ open ($need_indent_file, "<$sv_need_indent") || die;
 open ($indented_file_1st, ">$sv_need_indent.1st") || die;
 
 $line_cnt = 0;
+$get_comment = 0;
 while(<$need_indent_file>){
   chomp;
-  s/^\s*//g;
-  s/\s+$//g;
-  $line     = $_;
-  $org_line = $_;
-  $line =~ s/".*"//g;
-  $line =~ s/'.*'//g;
-  $line =~ s/\/\/.*//g;
-  $line =~ s/\(.*\)/ /g;
-  $line =~ s/extern\s+.*?task//g;
-  $line =~ s/extern\s+.*?function//g;
-  $line =~ s/pure\s+.*?function//g;
-  $line =~ s/disable\s+fork//g;
-  $line =~ s/virtual\s+interface//g;
-  $line =~ s/typedef\s+class//g;
-  $line =~ s/wait\s+fork\b//g;
+  $line     = &trim($_);
+  $org_line = $line;
+
+  if ($get_comment) {
+    if ($line !~ /\*\//) {
+      print $indented_file_1st $spaces.$org_line."\n";
+      next;
+    }
+  }
+  foreach my $ex_pattern (@exclude_keywords) {
+    $line =~ s/$ex_pattern/ /g;
+  }
+  if ($line =~ /(.*?\*\/)(.*?)(\/\*.*)/) {
+    $get_comment = 1;
+    $line = $2;
+  }elsif ($line =~ /(.*?)(\/\*.*)/) {
+    $line = $1;
+    $get_comment = 1;
+  }elsif($line =~ /(.*?\*\/)(.*)/){
+    $line = $2;
+    $get_comment = 0;
+  }
+
   @elems = split(/\s+/,$line);
 
   $line_kw_cnt = 0;
@@ -176,6 +186,12 @@ if(!defined $debug){
   unlink "$sv_need_indent.1st";
   unlink "$sv_need_indent.2nd";
   rename "$sv_need_indent.3rd",$sv_need_indent;
+}
+
+sub trim{
+  $aug = @_[0];
+  $aug =~ s/^\s+|\s+$//g;
+  return $aug;
 }
 
 sub help_info{
