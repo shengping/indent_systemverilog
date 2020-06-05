@@ -18,7 +18,7 @@ if ( not defined $sv_need_indent){
 $indent_cnt = 0;
 @inc_keywords=qw/begin case casex casez class    clocking    config    function    generate    covergroup interface    module    package    primitive    program    property    specify    table    task    fork randcase/;
 @dec_keywords=qw/end   endcase          endclass endclocking endconfig endfunction endgenerate endgroup   endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any/;
-@exclude_keywords = ('\/\*.*\*\/','".*"','\'.*\'','\/\/.*','\(.*\)','extern\s+.*?task','extern\s+.*?function','\bpure\s+virtual\s+\w+','disable\s+fork','virtual\s+interface','typedef\s+class','wait\s+fork\b');
+@exclude_keywords = ('\/\*.*\*\/','".*"','\'.*\'','\/\/.*','\(.*\)','extern\s+.*?task','import\s+.*?function','export\s+.*?function','extern\s+.*?function','\bpure\s+virtual\s+.*?task','\bpure\s+virtual\s+.*?function','disable\s+fork','virtual\s+interface','typedef\s+class','wait\s+fork\b');
 
 if ( not defined $space_num) {
   $space_num = 2;
@@ -79,28 +79,31 @@ while(<$need_indent_file>){
   if ($line_kw_cnt < 0) {
     $indent_cnt += $line_kw_cnt;
     $spaces = ${pattern_space}x$indent_cnt;
-    $spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif/);
+    #$spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif/);
     print $indented_file_1st $spaces.$org_line."\n";
 
   }elsif($line_kw_cnt>0){
     $spaces = ${pattern_space}x$indent_cnt;
-    $spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif/);
+    #$spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif/);
     print $indented_file_1st $spaces.$org_line."\n";
     $indent_cnt += $line_kw_cnt;
   }else{
     $spaces = ${pattern_space}x$indent_cnt;
-    $spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif|^end/);
+    #$spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif|^end/);
     print $indented_file_1st $spaces.$org_line."\n";
   }
 
   if ($indent_cnt < 0) {
-    print "ERROR!!!!! line: $line_cnt\n";
+    print "ERROR!!!!! line: $line_cnt $sv_need_indent\n";
     exit;
   }
   $line_cnt++;
 }
 close($need_indent_file);
 close($indented_file_1st);
+if ($indent_cnt != 0) {
+  print "$sv_need_indent \n";
+}
 
 open ($indented_file_1st, "<$sv_need_indent.1st") || die;
 open ($indented_file_2nd, ">$sv_need_indent.2nd") || die;
