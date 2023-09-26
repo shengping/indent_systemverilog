@@ -1,0 +1,6 @@
+*.swp
+sim/
+__pycache__/
+test.py
+*.png
+*.sv
