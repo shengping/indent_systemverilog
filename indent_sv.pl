@@ -16,8 +16,8 @@ if ( not defined $sv_need_indent){
 }
 
 $indent_cnt = 0;
-@inc_keywords=qw/begin case casex casez class    clocking    config    function    generate    covergroup interface    module    package    primitive    program    property    specify    table    task    fork randcase/;
-@dec_keywords=qw/end   endcase          endclass endclocking endconfig endfunction endgenerate endgroup   endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any/;
+@inc_keywords=qw/\{ begin case casex casez class    clocking    config    function    generate    covergroup interface    module    package    primitive    program    property    specify    table    task    fork randcase/;
+@dec_keywords=qw/\} end   endcase          endclass endclocking endconfig endfunction endgenerate endgroup   endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any/;
 @exclude_keywords = ('\/\*.*\*\/','".*"','\'.*\'','\/\/.*','\(.*\)','extern\s+.*?task','import\s+.*?function','export\s+.*?function','extern\s+.*?function','\bpure\s+virtual\s+.*?task','\bpure\s+virtual\s+.*?function','disable\s+fork','virtual\s+interface','typedef\s+class','wait\s+fork\b');
 
 if ( not defined $space_num) {
@@ -30,19 +30,19 @@ if ($space_num < 0) {
 }
 $pattern_space = " "x$space_num;
 
-open ($need_indent_file, "<$sv_need_indent") || die;
-open ($indented_file_1st, ">$sv_need_indent.1st") || die;
+open ($old_file, "<$sv_need_indent") || die;
+open ($new_file, ">$sv_need_indent.1st") || die;
 
 $line_cnt = 0;
 $get_comment = 0;
-while(<$need_indent_file>){
+while(<$old_file>){
   chomp;
   $line     = &trim($_);
   $org_line = $line;
 
   if ($get_comment) {
     if ($line !~ /\*\//) {
-      print $indented_file_1st $spaces.$org_line."\n";
+      print $new_file $spaces.$org_line."\n";
       next;
     }
   }
@@ -65,13 +65,25 @@ while(<$need_indent_file>){
   $line_kw_cnt = 0;
   foreach$to_match(@elems){
     foreach(@inc_keywords){
-      if($to_match =~ /\b$_\b/){
-        $line_kw_cnt++;
+      if ($_ =~ /\{/) {
+        if($to_match =~ /$_/){
+          $line_kw_cnt++;
+        }
+      }else{
+        if($to_match =~ /\b$_\b/){
+          $line_kw_cnt++;
+        }
       }
     }
     foreach(@dec_keywords){
-      if($to_match =~ /\b$_\b/){
-        $line_kw_cnt--;
+      if ($_ =~ /\}/) {
+        if($to_match =~ /$_/){
+          $line_kw_cnt--;
+        }
+      }else{
+        if($to_match =~ /\b$_\b/){
+          $line_kw_cnt--;
+        }
       }
     }
   }
@@ -80,17 +92,17 @@ while(<$need_indent_file>){
     $indent_cnt += $line_kw_cnt;
     $spaces = ${pattern_space}x$indent_cnt;
     #$spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif/);
-    print $indented_file_1st $spaces.$org_line."\n";
+    print $new_file $spaces.$org_line."\n";
 
   }elsif($line_kw_cnt>0){
     $spaces = ${pattern_space}x$indent_cnt;
     #$spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif/);
-    print $indented_file_1st $spaces.$org_line."\n";
+    print $new_file $spaces.$org_line."\n";
     $indent_cnt += $line_kw_cnt;
   }else{
     $spaces = ${pattern_space}x$indent_cnt;
     #$spaces =~ s/^$pattern_space// if($org_line =~ /^`ifndef|^`ifdef|^`else|^`elsif|^`endif|^end/);
-    print $indented_file_1st $spaces.$org_line."\n";
+    print $new_file $spaces.$org_line."\n";
   }
 
   if ($indent_cnt < 0) {
@@ -99,96 +111,99 @@ while(<$need_indent_file>){
   }
   $line_cnt++;
 }
-close($need_indent_file);
-close($indented_file_1st);
+close($old_file);
+close($new_file);
+
 if ($indent_cnt != 0) {
   print "$sv_need_indent \n";
 }
 
-open ($indented_file_1st, "<$sv_need_indent.1st") || die;
-open ($indented_file_2nd, ">$sv_need_indent.2nd") || die;
+open ($old_file, "<$sv_need_indent.1st") || die;
+open ($new_file, ">$sv_need_indent.2nd") || die;
+
+#$get_left_curly_brace = 0;
+#
+#while(<$old_file>){
+#  $line = $_;
+#  s/\/\/.*//g;
+#  if(/\{/ and !/\}/ and not /with\s*\{/){
+#  #if(/\{/ and !/\}/){
+#    $get_left_curly_brace = 1;
+#    s/(.*\{).*/$1/;
+#    chomp;
+#    $left_curly_brace_space = length($_);
+#    $left_curly_brace_space += $space_num;
+#    print $new_file $line;
+#    next;
+#  }
+#  if($get_left_curly_brace == 1){
+#    $line =~ s/^\s*//;
+#    if(/\}/ and not /\{/){
+#      $get_left_curly_brace = 0;
+#      if (/^\s*\}/) {
+#        $left_curly_brace_space = $left_curly_brace_space - $space_num - 1;
+#        print $new_file " "x$left_curly_brace_space.$line;
+#      }else{
+#        print $new_file " "x$left_curly_brace_space.$line;
+#        $left_curly_brace_space = $left_curly_brace_space - $space_num - 1;
+#      }
+#    }else{
+#      print $new_file " "x$left_curly_brace_space.$line;
+#    }
+#    if($left_curly_brace_space < 0) {
+#      print "left_curly_brace_space should not be less than 0!\n";
+#      exit;
+#    }
+#  }else{
+#    print $new_file $line;
+#  }
+#}
 
 $get_if_not_begin = 0;
 
-while(<$indented_file_1st>){
+while(<$old_file>){
 
   $line = $_;
   s/\/\/.*//g;
-  if(/\bif\b|\belse\b/ and !/\bbegin\b/ and !/;/){
+  if(/\bif\b|\belse\b|\bforeach\b/ and !/\bbegin\b/ and !/;/ and !/\{/){
     $get_if_not_begin = 1;
-    print $indented_file_2nd $line;
+    print $new_file $line;
     next;
   }
 
   if($get_if_not_begin == 1){
 
     if(/^\s*$/ or /^\s*\/\// or /^\s*\/\*/){
-      print $indented_file_2nd $line;
+      print $new_file $line;
       next;
     }
 
     $get_if_not_begin = 0;
-    if (!/\bbegin\b/) {
-      print $indented_file_2nd " "x$space_num.$line;
+    if (!/^\s*^\bbegin\b/ and !/^\s*\{/) {
+      print $new_file " "x$space_num.$line;
     }else {
-      print $indented_file_2nd $line;
+      print $new_file $line;
     }
 
   }else{
-    print $indented_file_2nd $line;
+    print $new_file $line;
   }
 }
+close($new_file);
+close($old_file);
 
-close($indented_file_2nd);
-close($indented_file_1st);
-
-open ($indented_file_2nd, "<$sv_need_indent.2nd") || die;
-open ($indented_file_3rd, ">$sv_need_indent.3rd") || die;
-
-$get_left_curly_brace = 0;
-while(<$indented_file_2nd>){
-  $line = $_;
-  s/\/\/.*//g;
-  if(/\{/ and !/\}/ and not /with\s*\{/){
-    $get_left_curly_brace = 1;
-    s/(.*\{).*/$1/;
-    chomp;
-    $left_curly_brace_space = length($_);
-    $left_curly_brace_space += $space_num;
-    print $indented_file_3rd $line;
-    next;
-  }
-  if($get_left_curly_brace == 1){
-    $line =~ s/^\s*//;
-    if(/\}/ and not /\{/){
-      $get_left_curly_brace = 0;
-      if (/^\s*\}/) {
-        $left_curly_brace_space = $left_curly_brace_space - $space_num - 1;
-        print $indented_file_3rd " "x$left_curly_brace_space.$line;
-      }else{
-        print $indented_file_3rd " "x$left_curly_brace_space.$line;
-        $left_curly_brace_space = $left_curly_brace_space - $space_num - 1;
-      }
-    }else{
-      print $indented_file_3rd " "x$left_curly_brace_space.$line;
-    }
-    if($left_curly_brace_space < 0) {
-      print "left_curly_brace_space should not be less than 0!\n";
-      exit;
-    }
-  }else{
-    print $indented_file_3rd $line;
-  }
-}
-
-close($indented_file_2nd);
-close($indented_file_3rd);
+#open ($old_file, "<$sv_need_indent.2nd") || die;
+#open ($new_file, ">$sv_need_indent.3rd") || die;
+#
+#
+#
+#close($old_file);
+#close($new_file);
 
 if(!defined $debug){
   unlink $sv_need_indent;
   unlink "$sv_need_indent.1st";
-  unlink "$sv_need_indent.2nd";
-  rename "$sv_need_indent.3rd",$sv_need_indent;
+  rename "$sv_need_indent.2nd",$sv_need_indent;
 }
 
 sub trim{
