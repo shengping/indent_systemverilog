@@ -1,8 +1,6 @@
 #!/usr/bin/env perl
 use Getopt::Long;
 
-
-
 GetOptions("file=s"=>\$sv_need_indent,
            "sn=i"  =>\$space_num,
            "debug" =>\$debug,
@@ -141,7 +139,7 @@ while(<$old_file>){
     }
 
     $get_if_not_begin = 0;
-    if (!/^\s*^\bbegin\b/ and !/^\s*\{/) {
+    if (!/^\s*\bbegin\b/ and !/^\s*\{/) {
       print $new_file " "x$space_num.$line;
     }else {
       print $new_file $line;
