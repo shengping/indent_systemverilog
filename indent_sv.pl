@@ -16,8 +16,8 @@ if ( not defined $sv_need_indent){
 }
 
 $indent_cnt = 0;
-@inc_keywords=qw/\{ begin case casex casez class    clocking    config    function    generate    covergroup interface    module    package    primitive    program    property    specify    table    task    fork randcase/;
-@dec_keywords=qw/\} end   endcase          endclass endclocking endconfig endfunction endgenerate endgroup   endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any/;
+@inc_keywords=qw/\{ begin case casex casez class    clocking    config    function    generate    covergroup interface    module    package    primitive    program    property    specify    table    task    fork randcase uvm_object_utils_begin/;
+@dec_keywords=qw/\} end   endcase          endclass endclocking endconfig endfunction endgenerate endgroup   endinterface endmodule endpackage endprimitive endprogram endproperty endspecify endtable endtask join join_none join_any uvm_object_utils_end/;
 @exclude_keywords = ('\/\*.*\*\/','".*"','\'.*\'','\/\/.*','\(.*\)','extern\s+.*?task','import\s+.*?function','export\s+.*?function','extern\s+.*?function','\bpure\s+virtual\s+.*?task','\bpure\s+virtual\s+.*?function','disable\s+fork','virtual\s+interface','typedef\s+class','wait\s+fork\b');
 
 if ( not defined $space_num) {
