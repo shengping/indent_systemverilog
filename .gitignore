@@ -1,6 +1,6 @@
 *.swp
 sim/
 __pycache__/
-test.py
+#test.py
 *.png
 *.sv
