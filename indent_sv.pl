@@ -152,35 +152,10 @@ while(<$old_file>){
 close($new_file);
 close($old_file);
 
-#open ($old_file, "<$sv_need_indent.2nd") || die;
-#open ($new_file, ">$sv_need_indent.3rd") || die;
-#
-#$get_assign = 0;
-#
-#while(<$old_file>){
-#
-#  $line = $_;
-#
-#  s/\/\/.*//g;
-#
-#  if (/(?<!\=|!|<|>)\=(?!\=|>)/) {
-#  #if (/^.*=(?!\=).*$/) {
-#    print $_;
-#  }
-#  else {
-#  }
-#
-#}
-#
-#close($old_file);
-#close($new_file);
-
 if(!defined $debug){
   unlink $sv_need_indent;
   unlink "$sv_need_indent.1st";
   rename "$sv_need_indent.2nd",$sv_need_indent;
-  #unlink "$sv_need_indent.2nd";
-  #rename "$sv_need_indent.3rd",$sv_need_indent;
 }
 
 sub trim{
